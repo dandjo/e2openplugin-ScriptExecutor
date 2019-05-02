@@ -7,12 +7,11 @@ from Screens.MessageBox import MessageBox
 from os import listdir
 from os.path import isdir, isfile, join
 
-scriptDirs = [
+dirs = [
     "/usr/scripts",
     "/media/hdd/scripts",
     "/media/usb/scripts"
 ]
-scriptDir = scriptDirs[0]
 
 class ScriptExecutor(Screen):
     skin = """
@@ -22,11 +21,12 @@ class ScriptExecutor(Screen):
 
     def __init__(self, session, args=None):
         self.session = session
+        self.dir = [d for d in dirs if isdir(d)][0]
         files = list()
-        for f in listdir(p):
-            if not isfile(join(p, f)):
+        for f in listdir(self.dir):
+            if not isfile(join(self.dir, f)):
                 continue
-            files.append((f, join(p, f)))
+            files.append((f, join(self.dir, f)))
         files.sort()
         Screen.__init__(self, session)
         self["scriptMenuList"] = MenuList(files)
@@ -40,20 +40,18 @@ class ScriptExecutor(Screen):
         if script is None:
             self.close(None)
         else:
-            self.session.open(Console, _(scriptDir), [script])
+            self.session.open(Console, _(self.dir), [script])
 
     def cancel(self):
         self.close(None)
 
 def main(session, **kwargs):
-    validDirs = [d for d in scriptDirs if isdir(d)]
     try:
-        scriptDir = validDirs[0]
         session.open(ScriptExecutor)
     except IndexError:
         session.open(MessageBox, _("No suitable directory found! "\
-            "Be sure to provide one of these paths on your "\
-            "filesystem: ['%s']" % "', '".join(scriptDirs)), MessageBox.TYPE_ERROR)
+            "Be sure to provide one of these paths on your filesystem: "\
+            "['%s']" % "', '".join(dirs)), MessageBox.TYPE_ERROR)
         return None
 
 def Plugins(**kwargs):
